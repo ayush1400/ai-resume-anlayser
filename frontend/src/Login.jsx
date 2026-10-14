@@ -26,7 +26,7 @@ function Login() {
             setLoading(true);
 
             const response = await fetch(
-                "https://ai-resume-analyser-api-8k49.onrender.com/api/login/",
+                "http://127.0.0.1:8000/api/login/",
                 {
                     method: "POST",
                     headers: {
@@ -103,7 +103,7 @@ function Login() {
                             <h1>Welcome Back</h1>
 
                             <p>
-                                Login to your ResumeAI account
+                                Login to your ResumeAI1400 account
                             </p>
                         </div>
 
@@ -189,7 +189,7 @@ function Login() {
 
                         <p>
                             Use these credentials to
-                            explore ResumeAI.
+                            explore ResumeAI1400.
                         </p>
 
                         <div className="demo-item">

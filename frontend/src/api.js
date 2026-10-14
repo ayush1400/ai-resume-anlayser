@@ -1,4 +1,4 @@
-const BASE_URL = "https://ai-resume-analyser-api-8k49.onrender.com/api";
+const BASE_URL = "http://127.0.0.1:8000/api";
 
 export async function apiFetch(endpoint, options = {}) {
     let accessToken = localStorage.getItem("access");

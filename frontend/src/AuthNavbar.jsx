@@ -32,7 +32,7 @@ function AuthNavbar() {
                     className="nav-link"
                     onClick={() =>
                         window.open(
-                            "https://ai-resume-analyser-api-8k49.onrender.com/admin/",
+                            "http://127.0.0.1:8000/admin/",
                             "_blank"
                         )
                     }

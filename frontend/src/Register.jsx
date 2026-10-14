@@ -43,7 +43,7 @@ function Register() {
 
             // Register user
             const registerResponse = await fetch(
-                "https://ai-resume-analyser-api-8k49.onrender.com/api/register/",
+                "http://127.0.0.1:8000/api/register/",
                 {
                     method: "POST",
                     headers: {
@@ -87,7 +87,7 @@ function Register() {
 
             // Automatically login after registration
             const loginResponse = await fetch(
-                "https://ai-resume-analyser-api-8k49.onrender.com/api/login/",
+                "http://127.0.0.1:8000/api/login/",
                 {
                     method: "POST",
                     headers: {
@@ -166,7 +166,7 @@ function Register() {
                             <h1>Create Account</h1>
 
                             <p>
-                                Create your ResumeAI account
+                                Create your ResumeAI1400 account
                             </p>
                         </div>
 
