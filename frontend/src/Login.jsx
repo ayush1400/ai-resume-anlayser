@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
 import AuthNavbar from "./AuthNavbar";
+import { BASE_URL } from "./api";
 
 function Login() {
     const navigate = useNavigate();
@@ -26,7 +27,7 @@ function Login() {
             setLoading(true);
 
             const response = await fetch(
-                "http://127.0.0.1:8000/api/login/",
+                `${BASE_URL}/login/`,
                 {
                     method: "POST",
                     headers: {

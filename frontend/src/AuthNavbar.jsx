@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import "./Navbar.css";
+import { API_ROOT } from "./api";
 
 function AuthNavbar() {
     const navigate = useNavigate();
@@ -32,7 +33,7 @@ function AuthNavbar() {
                     className="nav-link"
                     onClick={() =>
                         window.open(
-                            "http://127.0.0.1:8000/admin/",
+                            `${API_ROOT}/admin/`,
                             "_blank"
                         )
                     }
