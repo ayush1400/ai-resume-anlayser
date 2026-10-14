@@ -168,7 +168,8 @@ REST_FRAMEWORK = {
 }
 
 
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://ai-resume-analyser-80vh.onrender.com",
+    "https://ai-resume-anlayser.vercel.app",
 ]
