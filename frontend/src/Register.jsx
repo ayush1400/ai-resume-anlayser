@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Login.css";
@@ -10,13 +11,11 @@ function Register() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
     async function handleRegister(event) {
         event.preventDefault();
-
         setError("");
 
         if (!username.trim()) {
@@ -34,17 +33,17 @@ function Register() {
             return;
         }
 
-        if (password.length < 6) {
-            setError("Password must be at least 6 characters.");
+        if (password.length < 8) {
+            setError("Password must be at least 8 characters.");
             return;
         }
 
         try {
             setLoading(true);
 
-            // Register user
+            // Step 1: Register the account on the production API.
             const registerResponse = await fetch(
-                "http://127.0.0.1:8000/api/register/",
+                `${BASE_URL}/register/`,
                 {
                     method: "POST",
                     headers: {
@@ -53,14 +52,13 @@ function Register() {
                     body: JSON.stringify({
                         username: username.trim(),
                         email: email.trim(),
-                        password: password,
+                        password,
                     }),
                 }
             );
 
             const registerText = await registerResponse.text();
-
-            let registerData;
+            let registerData = {};
 
             try {
                 registerData = registerText
@@ -76,7 +74,7 @@ function Register() {
                 const firstError = Object.values(registerData)[0];
 
                 if (Array.isArray(firstError)) {
-                    throw new Error(firstError[0]);
+                    throw new Error(String(firstError[0]));
                 }
 
                 throw new Error(
@@ -86,9 +84,9 @@ function Register() {
                 );
             }
 
-            // Automatically login after registration
+            // Step 2: Log in using the correct login endpoint.
             const loginResponse = await fetch(
-                `${BASE_URL}/register/`,
+                `${BASE_URL}/login/`,
                 {
                     method: "POST",
                     headers: {
@@ -96,14 +94,13 @@ function Register() {
                     },
                     body: JSON.stringify({
                         username: username.trim(),
-                        password: password,
+                        password,
                     }),
                 }
             );
 
             const loginText = await loginResponse.text();
-
-            let loginData;
+            let loginData = {};
 
             try {
                 loginData = loginText
@@ -119,33 +116,26 @@ function Register() {
                 throw new Error(
                     loginData.detail ||
                     loginData.error ||
-                    "Automatic login failed."
+                    "Account created, but automatic login failed. Please log in."
                 );
             }
 
-            // Save JWT tokens
-            localStorage.setItem(
-                "access",
-                loginData.access
-            );
+            if (!loginData.access || !loginData.refresh) {
+                throw new Error(
+                    "Login succeeded but the API did not return both tokens."
+                );
+            }
 
-            localStorage.setItem(
-                "refresh",
-                loginData.refresh
-            );
+            // Step 3: Save the tokens and username.
+            localStorage.setItem("access", loginData.access);
+            localStorage.setItem("refresh", loginData.refresh);
+            localStorage.setItem("username", username.trim());
 
-            localStorage.setItem(
-                "username",
-                username.trim()
-            );
-
-            // Go directly to dashboard
             navigate("/dashboard");
 
         } catch (err) {
             setError(
-                err.message ||
-                "Something went wrong."
+                err.message || "Something went wrong."
             );
         } finally {
             setLoading(false);
@@ -157,15 +147,10 @@ function Register() {
             <AuthNavbar />
 
             <div className="auth-page">
-
                 <div className="register-layout">
-
-                    {/* LEFT SIDE - REGISTER FORM */}
                     <div className="auth-card">
-
                         <div className="auth-header">
                             <h1>Create Account</h1>
-
                             <p>
                                 Create your ResumeAI1400 account
                             </p>
@@ -178,58 +163,46 @@ function Register() {
                         )}
 
                         <form onSubmit={handleRegister}>
-
                             <div className="form-group">
-                                <label>
-                                    Username
-                                </label>
-
+                                <label>Username</label>
                                 <input
                                     type="text"
                                     value={username}
                                     onChange={(event) =>
-                                        setUsername(
-                                            event.target.value
-                                        )
+                                        setUsername(event.target.value)
                                     }
                                     placeholder="Enter username"
                                     disabled={loading}
+                                    required
                                 />
                             </div>
 
                             <div className="form-group">
-                                <label>
-                                    Email
-                                </label>
-
+                                <label>Email</label>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(event) =>
-                                        setEmail(
-                                            event.target.value
-                                        )
+                                        setEmail(event.target.value)
                                     }
                                     placeholder="Enter email"
                                     disabled={loading}
+                                    required
                                 />
                             </div>
 
                             <div className="form-group">
-                                <label>
-                                    Password
-                                </label>
-
+                                <label>Password</label>
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(event) =>
-                                        setPassword(
-                                            event.target.value
-                                        )
+                                        setPassword(event.target.value)
                                     }
                                     placeholder="Create password"
                                     disabled={loading}
+                                    minLength={8}
+                                    required
                                 />
                             </div>
 
@@ -242,35 +215,22 @@ function Register() {
                                     ? "Creating Account..."
                                     : "Create Account"}
                             </button>
-
                         </form>
 
                         <div className="auth-footer">
-                            <span>
-                                Already have an account?
-                            </span>
-
+                            <span>Already have an account?</span>
                             <button
                                 type="button"
-                                onClick={() =>
-                                    navigate("/login")
-                                }
+                                onClick={() => navigate("/login")}
                             >
                                 Login
                             </button>
                         </div>
-
                     </div>
 
-                    {/* RIGHT SIDE - PASSWORD CONDITIONS */}
                     <div className="password-conditions">
-
                         <h2>Password Requirements</h2>
-
-                        <p>
-                            Your password should contain:
-                        </p>
-
+                        <p>Your password should contain:</p>
                         <ul>
                             <li>At least 8 characters</li>
                             <li>At least 1 uppercase letter</li>
@@ -278,11 +238,8 @@ function Register() {
                             <li>At least 1 number</li>
                             <li>At least 1 special character</li>
                         </ul>
-
                     </div>
-
                 </div>
-
             </div>
         </>
     );
