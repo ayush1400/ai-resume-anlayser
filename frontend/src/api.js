@@ -1,129 +1,98 @@
 
+const LOCAL_API_URL = "http://127.0.0.1:8000/api";
+
 export const BASE_URL = (
-    import.meta.env.VITE_API_BASE_URL ||
-    "http://127.0.0.1:8000/api"
+  import.meta.env.VITE_API_BASE_URL || LOCAL_API_URL
 ).replace(/\/+$/, "");
 
 export const API_ROOT = BASE_URL.replace(/\/api$/, "");
 
-
 export async function apiFetch(endpoint, options = {}) {
-    let accessToken = localStorage.getItem("access");
+  let accessToken = localStorage.getItem("access");
 
-    async function makeRequest(token) {
-        const headers = {
-            ...options.headers,
-        };
+  async function makeRequest(token) {
+    const headers = { ...options.headers };
 
-        if (token) {
-            headers.Authorization = `Bearer ${token}`;
-        }
-
-        if (
-            options.body &&
-            !(options.body instanceof FormData)
-        ) {
-            headers["Content-Type"] = "application/json";
-        }
-
-        return fetch(
-            `${BASE_URL}${endpoint}`,
-            {
-                ...options,
-                headers,
-            }
-        );
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
-    let response = await makeRequest(accessToken);
-
-    // Access token expired/invalid
-    if (response.status === 401) {
-
-        const refreshToken =
-            localStorage.getItem("refresh");
-
-        if (!refreshToken) {
-            localStorage.removeItem("access");
-            localStorage.removeItem("refresh");
-
-            window.location.href = "/login";
-
-            throw new Error("Session expired. Please login again.");
-        }
-
-        const refreshResponse = await fetch(
-            `${BASE_URL}/token/refresh/`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json",
-                },
-
-                body: JSON.stringify({
-                    refresh: refreshToken,
-                }),
-            }
-        );
-
-        const refreshText =
-            await refreshResponse.text();
-
-        let refreshData;
-
-        try {
-            refreshData = refreshText
-                ? JSON.parse(refreshText)
-                : {};
-        } catch {
-            throw new Error(
-                "Token refresh returned an invalid response."
-            );
-        }
-
-        if (!refreshResponse.ok) {
-            localStorage.removeItem("access");
-            localStorage.removeItem("refresh");
-
-            window.location.href = "/login";
-
-            throw new Error(
-                "Session expired. Please login again."
-            );
-        }
-
-        // Save new access token
-        accessToken = refreshData.access;
-
-        localStorage.setItem(
-            "access",
-            accessToken
-        );
-
-        // Retry original request
-        response = await makeRequest(accessToken);
+    if (
+      options.body &&
+      !(options.body instanceof FormData)
+    ) {
+      headers["Content-Type"] = "application/json";
     }
 
-    const text = await response.text();
+    return fetch(`${BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  }
 
-    let data;
+  let response = await makeRequest(accessToken);
+
+  // Refresh the access token when it expires.
+  if (response.status === 401) {
+    const refreshToken = localStorage.getItem("refresh");
+
+    if (!refreshToken) {
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    const refreshResponse = await fetch(
+      `${BASE_URL}/token/refresh/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh: refreshToken }),
+      }
+    );
+
+    const refreshText = await refreshResponse.text();
+    let refreshData = {};
 
     try {
-        data = text ? JSON.parse(text) : {};
+      refreshData = refreshText ? JSON.parse(refreshText) : {};
     } catch {
-        throw new Error(
-            `API ${endpoint} returned an invalid response. Status: ${response.status}`
-        );
+      throw new Error("Token refresh returned an invalid response.");
     }
 
-    if (!response.ok) {
-        throw new Error(
-            data.detail ||
-            data.error ||
-            "Something went wrong."
-        );
+    if (!refreshResponse.ok || !refreshData.access) {
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
+      throw new Error("Session expired. Please log in again.");
     }
 
-    return data;
+    accessToken = refreshData.access;
+    localStorage.setItem("access", accessToken);
+
+    response = await makeRequest(accessToken);
+  }
+
+  const text = await response.text();
+  let data = {};
+
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(
+      `API ${endpoint} returned an invalid response. Status: ${response.status}`
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data.detail ||
+      data.error ||
+      data.message ||
+      `Request failed with status ${response.status}.`
+    );
+  }
+
+  return data;
 }
